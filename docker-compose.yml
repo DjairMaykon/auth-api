@@ -4,9 +4,10 @@ services:
   db:
     image: mongo
     restart: always
+    env_file: .env
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=my-username
-      - MONGO_INITDB_ROOT_PASSWORD=my-root-password
+      - MONGO_INITDB_ROOT_USERNAME=${MONGODB_USER}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGODB_PASSWORD}
     volumes:
       - /data/db:/data/db
   authapi:
@@ -23,12 +24,5 @@ services:
       - .:/app
       - /data/db:/data/db
     ports:
-      - 3000:3000
+      - ${PORT}:3000
     command: ['npm', 'run', 'dev']
-  # db:
-  #   image: 'mongo'
-  #   container_name: MONGODB_MEDIUM
-  #   ports:
-  #     - '27017:27017'
-  #   volumes:
-  #     - ./data/db:/data/db
