@@ -1,17 +1,18 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, NextFunction, Request, Response } from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
 import HttpException from './exceptions/HttpException';
+import Controller from './interfaces/controller.interface';
 
 class Application {
   private app: Express;
 
-  constructor() {
+  constructor(controllers: Controller[]) {
     this.app = express();
 
     this.config();
-    this.routes();
+    this.routes(controllers);
     this.errorHandling();
   }
 
@@ -23,7 +24,11 @@ class Application {
     this.app.use(morgan('dev'));
   }
 
-  routes() {
+  routes(controllers: Controller[]) {
+    controllers.forEach(controller => {
+      this.app.use(controller.basePath, controller.router);
+    });
+
     this.app.get('/', (req, res) => {
       res.status(200).json({
         message: 'Hello, world',
@@ -33,16 +38,26 @@ class Application {
 
   errorHandling() {
     this.app.use((req, res) => {
-      res.status(404).send({ message: 'Resource not found' });
+      res.status(404).json({ message: 'Resource not found' });
     });
 
-    this.app.use((error: HttpException, req: Request, res: Response) => {
-      const status = error.status || 500;
-      const message = error.message || 'Something went wrong';
-      res.status(status).send({
-        message,
-      });
-    });
+    this.app.use(
+      (
+        error: HttpException,
+        req: Request,
+        res: Response,
+        next: NextFunction,
+      ) => {
+        const status = error.status || 500;
+        const message = error.message || 'Something went wrong';
+
+        res.status(status).json({
+          message,
+        });
+
+        next(error);
+      },
+    );
   }
 
   init() {

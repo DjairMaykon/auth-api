@@ -1,5 +1,13 @@
 import 'dotenv/config';
-import Application from './App';
+import Application from './core/App';
+import UserController from './domains/user/user.controller';
+import connectDatabase from './infra/database';
 
-const app = new Application();
-app.init();
+connectDatabase()
+  .then(() => {
+    const app = new Application([new UserController()]);
+    app.init();
+  })
+  .catch(err => {
+    console.log(`Error connecting to database: ${err.message}`);
+  });
